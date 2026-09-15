@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+build/
+dist/
+*.egg-info/
+*.so
+.cmake/
+CMakeCache.txt
+_Cache/
+*.vtu
+.DS_Store
+.coverage
+cov.xml
+.coverage.*
+htmlcov/

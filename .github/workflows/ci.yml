@@ -1,0 +1,94 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  linux:
+    name: Linux (Ubuntu 22.04, Python ${{ matrix.python-version }})
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake ninja-build libeigen3-dev pybind11-dev
+
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install numpy pytest pytest-cov meshio matplotlib
+
+      - name: Build & Install femcore
+        run: pip install . -v
+
+      - name: Verify C++ Module Import
+        run: python -c "import femcore; assert femcore.registered_elements() == ['C3D4','C3D8','CPE3','CPE4','CPS3','CPS4']"
+
+      - name: Run Test Suite
+        run: pytest python/tests -m "not slow" -v --cov=fem --cov-report=xml
+
+      - name: Run Analytical Benchmarks
+        run: python tests/run_benchmarks.py
+
+  windows:
+    name: Windows (Server 2022, Python ${{ matrix.python-version }})
+    runs-on: windows-2022
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Set up MSVC Toolchain
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Install vcpkg Dependencies
+        run: |
+          git clone https://github.com/microsoft/vcpkg $env:VCPKG_ROOT
+          & "$env:VCPKG_ROOT\bootstrap-vcpkg.bat"
+          & "$env:VCPKG_ROOT\vcpkg.exe" install eigen3 pybind11 --triplet x64-windows
+
+      - name: Build & Install
+        run: |
+          $env:CMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake"
+          pip install . -v
+
+      - name: Run Unit Tests
+        run: pytest python/tests -m "not slow" -v
+
+  lint:
+    name: Code Style & Quality Checks
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install Linters
+        run: pip install flake8 black
+      - name: Python Format Check
+        run: black --check --diff python/fem python/tests
+      - name: Python Lint Check
+        run: flake8 python/fem --max-line-length=100

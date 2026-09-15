@@ -1,0 +1,35 @@
+[build-system]
+requires = ["scikit-build-core>=0.9"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "fem-project"
+version = "0.1.0"
+description = "Hybrid Python-C++ linear elastic finite element solver (ABAQUS .inp -> VTK .vtu)"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+dependencies = ["numpy>=1.23"]
+
+[project.scripts]
+femsolver = "fem.cli:main"
+
+[project.optional-dependencies]
+test = ["pytest>=7.0", "pytest-cov", "meshio>=5.0", "matplotlib"]
+viz = ["meshio>=5.0"]
+
+[tool.scikit-build]
+wheel.packages = ["python/fem"]
+
+[tool.scikit-build.install]
+strip = false
+
+[tool.pytest.ini_options]
+pythonpath = ["python"]
+markers = [
+    "unit: fast isolated component tests (<1s)",
+    "integration: cross-module workflow tests (1s-10s)",
+    "benchmark: analytical validation benchmarks (10s-120s)",
+    "slow: heavy mesh convergence runs (>5min, nightly CI)",
+]
+filterwarnings = ["error"]
