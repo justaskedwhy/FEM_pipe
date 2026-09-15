@@ -76,7 +76,7 @@ jobs:
         run: pip install . -v
 
       - name: Run Unit Tests
-        run: pytest python/tests -m "not slow" -v
+        run: python -m pytest python/tests -m "not slow" -v
 
   lint:
     name: Code Style & Quality Checks
