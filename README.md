@@ -124,7 +124,7 @@ Open the `.vtu` in ParaView and apply **Warp By Vector** with
 | `q4_pressure.inp` | CPS4 | top-face pressure, exact σ_yy |
 | `h8_pressure.inp` | C3D8 | top-face pressure, exact σ_zz |
 
-Full ABAQUS/CAE export decks (part/assembly/instance structure, `GENERATE` sets, `*SURFACE` + `*DSLOAD` pressure):
+Real ABAQUS/CAE export decks — also in `tests/inputs/` (part/assembly/instance structure, `GENERATE` sets, `*SURFACE` + `*DSLOAD` pressure). Smoke-tested end-to-end; no closed-form reference results exist, so they verify solve + convergence only:
 
 | Deck | Element | Mesh |
 |------|---------|------|
