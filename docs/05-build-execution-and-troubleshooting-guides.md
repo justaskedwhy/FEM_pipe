@@ -80,7 +80,7 @@ python -c "import femcore; print(femcore.registered_elements())"
 
 #### Expected Output
 ```text
-['C3D4', 'C3D8', 'CPE3', 'CPE4', 'CPS3', 'CPS4']
+['C3D4', 'C3D8', 'CPE3', 'CPE4', 'CPS3', 'CPS4', 'CPS4R']
 ```
 *If `femcore.registered_elements()` returns an empty list, static initializers were stripped by the linker. Ensure every `elements_*.cpp` file is listed under `pybind11_add_module(femcore ...)` in `CMakeLists.txt`.*
 

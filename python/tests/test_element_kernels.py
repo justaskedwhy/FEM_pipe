@@ -23,6 +23,7 @@ def test_registered_elements():
         "CPE4",
         "CPS3",
         "CPS4",
+        "CPS4R",
     ]
 
 

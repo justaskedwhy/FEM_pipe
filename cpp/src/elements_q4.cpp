@@ -180,3 +180,4 @@ private:
 
 REGISTER_ELEMENT("CPS4", fem::Q4Kernel);
 REGISTER_ELEMENT("CPE4", fem::Q4Kernel);
+REGISTER_ELEMENT("CPS4R", fem::Q4Kernel);
