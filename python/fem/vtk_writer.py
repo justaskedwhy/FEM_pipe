@@ -50,82 +50,104 @@ def write_vtu_manual(filepath: str, fem_model, solver_output) -> None:
 
     with open(filepath, "w") as f:
         f.write('<?xml version="1.0"?>\n')
-        f.write('<VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian">\n')
-        f.write('  <UnstructuredGrid>\n')
+        f.write(
+            '<VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian">\n'
+        )
+        f.write("  <UnstructuredGrid>\n")
         f.write(f'    <Piece NumberOfPoints="{n_pts}" NumberOfCells="{n_cells}">\n')
 
-        f.write('      <Points>\n')
-        f.write('        <DataArray type="Float64" NumberOfComponents="3" format="ascii">\n')
+        f.write("      <Points>\n")
+        f.write(
+            '        <DataArray type="Float64" NumberOfComponents="3" format="ascii">\n'
+        )
         for row in fem_model.coords:
-            f.write(f'          {row[0]:.8e} {row[1]:.8e} {row[2]:.8e}\n')
-        f.write('        </DataArray>\n')
-        f.write('      </Points>\n')
+            f.write(f"          {row[0]:.8e} {row[1]:.8e} {row[2]:.8e}\n")
+        f.write("        </DataArray>\n")
+        f.write("      </Points>\n")
 
-        f.write('      <Cells>\n')
+        f.write("      <Cells>\n")
         f.write('        <DataArray type="Int32" Name="connectivity" format="ascii">\n')
         for c in conn:
-            f.write('          ' + ' '.join(map(str, c)) + '\n')
-        f.write('        </DataArray>\n')
+            f.write("          " + " ".join(map(str, c)) + "\n")
+        f.write("        </DataArray>\n")
 
         f.write('        <DataArray type="Int32" Name="offsets" format="ascii">\n')
         offset = 0
         for c in conn:
             offset += len(c)
-            f.write(f'          {offset}\n')
-        f.write('        </DataArray>\n')
+            f.write(f"          {offset}\n")
+        f.write("        </DataArray>\n")
 
         f.write('        <DataArray type="UInt8" Name="types" format="ascii">\n')
         for elem_type in fem_model.elem_type_name:
             f.write(f'          {element_meta(elem_type)["vtk"]}\n')
-        f.write('        </DataArray>\n')
-        f.write('      </Cells>\n')
+        f.write("        </DataArray>\n")
+        f.write("      </Cells>\n")
 
-        f.write('      <PointData Scalars="displacement_magnitude" Vectors="displacement">\n')
-        f.write('        <DataArray type="Float64" Name="displacement" '
-                'NumberOfComponents="3" format="ascii">\n')
+        f.write(
+            '      <PointData Scalars="displacement_magnitude" Vectors="displacement">\n'
+        )
+        f.write(
+            '        <DataArray type="Float64" Name="displacement" '
+            'NumberOfComponents="3" format="ascii">\n'
+        )
         for u in disp:
-            f.write(f'          {u[0]:.8e} {u[1]:.8e} {u[2]:.8e}\n')
-        f.write('        </DataArray>\n')
+            f.write(f"          {u[0]:.8e} {u[1]:.8e} {u[2]:.8e}\n")
+        f.write("        </DataArray>\n")
 
         disp_mag = np.linalg.norm(disp, axis=1)
-        f.write('        <DataArray type="Float64" Name="displacement_magnitude" '
-                'NumberOfComponents="1" format="ascii">\n')
+        f.write(
+            '        <DataArray type="Float64" Name="displacement_magnitude" '
+            'NumberOfComponents="1" format="ascii">\n'
+        )
         for mag in disp_mag:
-            f.write(f'          {mag:.8e}\n')
-        f.write('        </DataArray>\n')
-        f.write('      </PointData>\n')
+            f.write(f"          {mag:.8e}\n")
+        f.write("        </DataArray>\n")
+        f.write("      </PointData>\n")
 
         f.write('      <CellData Scalars="von_mises">\n')
-        f.write('        <DataArray type="Float64" Name="stress" '
-                'NumberOfComponents="6" format="ascii">\n')
+        f.write(
+            '        <DataArray type="Float64" Name="stress" '
+            'NumberOfComponents="6" format="ascii">\n'
+        )
         for s in stress:
-            f.write(f'          {s[0]:.8e} {s[1]:.8e} {s[2]:.8e} {s[3]:.8e} {s[4]:.8e} '
-                    f'{s[5]:.8e}\n')
-        f.write('        </DataArray>\n')
+            f.write(
+                f"          {s[0]:.8e} {s[1]:.8e} {s[2]:.8e} {s[3]:.8e} {s[4]:.8e} "
+                f"{s[5]:.8e}\n"
+            )
+        f.write("        </DataArray>\n")
 
-        f.write('        <DataArray type="Float64" Name="strain" '
-                'NumberOfComponents="6" format="ascii">\n')
+        f.write(
+            '        <DataArray type="Float64" Name="strain" '
+            'NumberOfComponents="6" format="ascii">\n'
+        )
         for s in strain:
-            f.write(f'          {s[0]:.8e} {s[1]:.8e} {s[2]:.8e} {s[3]:.8e} {s[4]:.8e} '
-                    f'{s[5]:.8e}\n')
-        f.write('        </DataArray>\n')
+            f.write(
+                f"          {s[0]:.8e} {s[1]:.8e} {s[2]:.8e} {s[3]:.8e} {s[4]:.8e} "
+                f"{s[5]:.8e}\n"
+            )
+        f.write("        </DataArray>\n")
 
-        f.write('        <DataArray type="Float64" Name="von_mises" '
-                'NumberOfComponents="1" format="ascii">\n')
+        f.write(
+            '        <DataArray type="Float64" Name="von_mises" '
+            'NumberOfComponents="1" format="ascii">\n'
+        )
         for v in vm:
-            f.write(f'          {v:.8e}\n')
-        f.write('        </DataArray>\n')
+            f.write(f"          {v:.8e}\n")
+        f.write("        </DataArray>\n")
 
-        f.write('        <DataArray type="Float64" Name="principal_stress" '
-                'NumberOfComponents="3" format="ascii">\n')
+        f.write(
+            '        <DataArray type="Float64" Name="principal_stress" '
+            'NumberOfComponents="3" format="ascii">\n'
+        )
         for p in np.asarray(solver_output.elem_principal):
-            f.write(f'          {p[0]:.8e} {p[1]:.8e} {p[2]:.8e}\n')
-        f.write('        </DataArray>\n')
-        f.write('      </CellData>\n')
+            f.write(f"          {p[0]:.8e} {p[1]:.8e} {p[2]:.8e}\n")
+        f.write("        </DataArray>\n")
+        f.write("      </CellData>\n")
 
-        f.write('    </Piece>\n')
-        f.write('  </UnstructuredGrid>\n')
-        f.write('</VTKFile>\n')
+        f.write("    </Piece>\n")
+        f.write("  </UnstructuredGrid>\n")
+        f.write("</VTKFile>\n")
 
 
 def write_vtu_meshio(filepath: str, fem_model, solver_output) -> None:
@@ -149,8 +171,12 @@ def write_vtu_meshio(filepath: str, fem_model, solver_output) -> None:
         "stress": [np.asarray(solver_output.elem_stress, dtype=np.float64)],
         "strain": [np.asarray(solver_output.elem_strain, dtype=np.float64)],
         "von_mises": [np.asarray(solver_output.elem_von_mises, dtype=np.float64)],
-        "principal_stress": [np.asarray(solver_output.elem_principal, dtype=np.float64)],
+        "principal_stress": [
+            np.asarray(solver_output.elem_principal, dtype=np.float64)
+        ],
     }
 
-    mesh = meshio.Mesh(points=points, cells=cells, point_data=point_data, cell_data=cell_data)
+    mesh = meshio.Mesh(
+        points=points, cells=cells, point_data=point_data, cell_data=cell_data
+    )
     mesh.write(filepath, file_format="vtu", binary=False)

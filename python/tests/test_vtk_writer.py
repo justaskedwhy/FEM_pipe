@@ -9,7 +9,12 @@ def test_manual_writer_ascii_structure(minimal_deck, tmp_path):
     model = build_model(parse_inp(minimal_deck))
 
     class DummyOutput:
-        displacement = [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, -1e-5, 0.0], [0.0, -1e-5, 0.0]]
+        displacement = [
+            [0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0],
+            [0.0, -1e-5, 0.0],
+            [0.0, -1e-5, 0.0],
+        ]
         elem_stress = [[2.0e8, 0.0, 0.0, 0.0, 0.0, 0.0]]
         elem_strain = [[1e-3, -3e-4, -3e-4, 0.0, 0.0, 0.0]]
         elem_von_mises = [2.0e8]

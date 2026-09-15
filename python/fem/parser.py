@@ -137,7 +137,9 @@ def _parse_int(text: str, line_no: int) -> int:
         except ValueError:
             raise InputError(f"Malformed integer at line {line_no}: {text!r}")
     if value <= 0:
-        raise InputError(f"Identifier must be a positive integer at line {line_no}: {text!r}")
+        raise InputError(
+            f"Identifier must be a positive integer at line {line_no}: {text!r}"
+        )
     return value
 
 
@@ -180,12 +182,14 @@ def parse_inp(text: str) -> RawModel:
             current_params = params
             if keyword_name in UNSUPPORTED_KEYWORDS:
                 logger.warning(
-                    "[parser] Ignoring unsupported keyword %s (data block skipped)", keyword_name
+                    "[parser] Ignoring unsupported keyword %s (data block skipped)",
+                    keyword_name,
                 )
                 current_keyword = "__skip__"
             elif keyword_name not in SUPPORTED_KEYWORDS:
                 logger.warning(
-                    "[parser] Ignoring unknown keyword %s (data block skipped)", keyword_name
+                    "[parser] Ignoring unknown keyword %s (data block skipped)",
+                    keyword_name,
                 )
                 current_keyword = "__skip__"
             elif keyword_name == "MATERIAL":
@@ -253,10 +257,14 @@ def parse_inp(text: str) -> RawModel:
 
         elif current_keyword in ("NSET", "ELSET"):
             is_nset = current_keyword == "NSET"
-            set_name = current_params.get("NSET") if is_nset else current_params.get("ELSET")
+            set_name = (
+                current_params.get("NSET") if is_nset else current_params.get("ELSET")
+            )
             if not set_name:
                 param = "NSET" if is_nset else "ELSET"
-                raise InputError(f"*{current_keyword} requires {param}= at line {line_no}")
+                raise InputError(
+                    f"*{current_keyword} requires {param}= at line {line_no}"
+                )
             target = model.nsets if is_nset else model.elsets
             for token in fields:
                 if not token:
@@ -276,7 +284,9 @@ def parse_inp(text: str) -> RawModel:
                 raise InputError(f"Duplicate element id {elem_id} at line {line_no}")
             node_ids = [_parse_int(f, line_no) for f in fields[1:] if f]
             if not node_ids:
-                raise InputError(f"*ELEMENT entry needs at least one node at line {line_no}")
+                raise InputError(
+                    f"*ELEMENT entry needs at least one node at line {line_no}"
+                )
             model.elements[elem_id] = RawElement(
                 id=elem_id, type_name=current_params["TYPE"].upper(), node_ids=node_ids
             )
@@ -294,11 +304,15 @@ def parse_inp(text: str) -> RawModel:
                 raise InputError(f"*ELASTIC entry needs E,nu at line {line_no}")
             E = _parse_float(fields[0], line_no)
             nu = _parse_float(fields[1], line_no)
-            model.materials[current_material] = RawMaterial(name=current_material, E=E, nu=nu)
+            model.materials[current_material] = RawMaterial(
+                name=current_material, E=E, nu=nu
+            )
 
         elif current_keyword == "BOUNDARY":
             if len(fields) < 3:
-                raise InputError(f"*BOUNDARY entry needs node,dof_first,dof_last at line {line_no}")
+                raise InputError(
+                    f"*BOUNDARY entry needs node,dof_first,dof_last at line {line_no}"
+                )
             node_token = fields[0].strip()
             if _is_int(node_token):
                 node_id = _parse_int(node_token, line_no)
@@ -327,7 +341,9 @@ def parse_inp(text: str) -> RawModel:
 
         elif current_keyword == "CLOAD":
             if len(fields) < 3:
-                raise InputError(f"*CLOAD entry needs node,dof,magnitude at line {line_no}")
+                raise InputError(
+                    f"*CLOAD entry needs node,dof,magnitude at line {line_no}"
+                )
             node_token = fields[0].strip()
             if _is_int(node_token):
                 node_id = _parse_int(node_token, line_no)
@@ -340,27 +356,38 @@ def parse_inp(text: str) -> RawModel:
                 raise InputError(f"*CLOAD invalid dof {dof} at line {line_no}")
             magnitude = _parse_float(fields[2], line_no)
             model.point_loads.append(
-                RawPointLoad(node_id=node_id, dof=dof, magnitude=magnitude, node_set=node_set)
+                RawPointLoad(
+                    node_id=node_id, dof=dof, magnitude=magnitude, node_set=node_set
+                )
             )
 
         elif current_keyword == "DLOAD":
             if len(fields) < 3:
-                raise InputError(f"*DLOAD entry needs element,face,magnitude at line {line_no}")
+                raise InputError(
+                    f"*DLOAD entry needs element,face,magnitude at line {line_no}"
+                )
             elem_id = _parse_int(fields[0], line_no)
             face_label = fields[1].upper()
             if not (face_label.startswith("P") and face_label[1:].isdigit()):
-                raise InputError(f"*DLOAD invalid face label {face_label!r} at line {line_no}")
+                raise InputError(
+                    f"*DLOAD invalid face label {face_label!r} at line {line_no}"
+                )
             magnitude = _parse_float(fields[2], line_no)
             model.pressure_loads.append(
-                RawPressureLoad(elem_id=elem_id, face_label=face_label, magnitude=magnitude)
+                RawPressureLoad(
+                    elem_id=elem_id, face_label=face_label, magnitude=magnitude
+                )
             )
 
         elif current_keyword in ("STEP", "STATIC", "END STEP"):
             continue
 
         else:
-            logger.warning("[parser] Ignoring unexpected data under %s at line %d",
-                           current_keyword, line_no)
+            logger.warning(
+                "[parser] Ignoring unexpected data under %s at line %d",
+                current_keyword,
+                line_no,
+            )
 
     return model
 

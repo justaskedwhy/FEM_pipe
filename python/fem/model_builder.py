@@ -26,8 +26,12 @@ class FEMModel:
     elem_mat: np.ndarray = field(default_factory=lambda: np.zeros(0, dtype=np.int32))
     mat_E: np.ndarray = field(default_factory=lambda: np.zeros(0, dtype=np.float64))
     mat_nu: np.ndarray = field(default_factory=lambda: np.zeros(0, dtype=np.float64))
-    mat_thickness: np.ndarray = field(default_factory=lambda: np.zeros(0, dtype=np.float64))
-    mat_plane_mode: np.ndarray = field(default_factory=lambda: np.zeros(0, dtype=np.int32))
+    mat_thickness: np.ndarray = field(
+        default_factory=lambda: np.zeros(0, dtype=np.float64)
+    )
+    mat_plane_mode: np.ndarray = field(
+        default_factory=lambda: np.zeros(0, dtype=np.int32)
+    )
     boundaries: list = field(default_factory=list)
     point_loads: list = field(default_factory=list)
     pressure_loads: list = field(default_factory=list)
@@ -47,10 +51,17 @@ def _expand_set_boundaries(boundaries, nsets):
             continue
         node_ids = nsets.get(b.node_set)
         if not node_ids:
-            raise ModelError(f"*BOUNDARY references undefined or empty node set '{b.node_set}'")
+            raise ModelError(
+                f"*BOUNDARY references undefined or empty node set '{b.node_set}'"
+            )
         for nid in node_ids:
             expanded.append(
-                RawBoundary(node_id=nid, dof_first=b.dof_first, dof_last=b.dof_last, value=b.value)
+                RawBoundary(
+                    node_id=nid,
+                    dof_first=b.dof_first,
+                    dof_last=b.dof_last,
+                    value=b.value,
+                )
             )
     return expanded
 
@@ -63,7 +74,9 @@ def _expand_set_point_loads(point_loads, nsets):
             continue
         node_ids = nsets.get(p.node_set)
         if not node_ids:
-            raise ModelError(f"*CLOAD references undefined or empty node set '{p.node_set}'")
+            raise ModelError(
+                f"*CLOAD references undefined or empty node set '{p.node_set}'"
+            )
         for nid in node_ids:
             expanded.append(RawPointLoad(node_id=nid, dof=p.dof, magnitude=p.magnitude))
     return expanded
@@ -86,9 +99,7 @@ def build_model(raw: RawModel) -> FEMModel:
             try:
                 element_metas[elem.type_name] = element_meta(elem.type_name)
             except ModelError:
-                raise ModelError(
-                    f"Element type '{elem.type_name}' is not registered"
-                )
+                raise ModelError(f"Element type '{elem.type_name}' is not registered")
 
     dimensions = {m["dim"] for m in element_metas.values()}
     if len(dimensions) > 1:
@@ -98,7 +109,6 @@ def build_model(raw: RawModel) -> FEMModel:
     dimension = dimensions.pop()
 
     node_order = list(raw.nodes.values())
-    node_ids = [n.id for n in node_order]
     node_id_to_idx = {n.id: i for i, n in enumerate(node_order)}
 
     coords = np.zeros((len(node_order), 3), dtype=np.float64)
@@ -149,7 +159,8 @@ def build_model(raw: RawModel) -> FEMModel:
             )
         if section.elset_name not in raw.elsets:
             logger.warning(
-                "[model] *SOLID SECTION elset '%s' is empty or undefined", section.elset_name
+                "[model] *SOLID SECTION elset '%s' is empty or undefined",
+                section.elset_name,
             )
             continue
         for eid in raw.elsets[section.elset_name]:

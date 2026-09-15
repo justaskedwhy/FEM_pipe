@@ -66,7 +66,9 @@ def benchmark_cantilever():
 
     # Doc 06 2.1 / 1.3: monotone convergence from below under refinement.
     for t in tips:
-        assert 0.0 < t < DELTA_TIP_ANALYTICAL, "all meshes must under-predict tip (shear locking)"
+        assert (
+            0.0 < t < DELTA_TIP_ANALYTICAL
+        ), "all meshes must under-predict tip (shear locking)"
     for a, b in zip(tips, tips[1:]):
         assert b >= a - 1e-9, "tip deflection must converge monotonically as h -> 0"
 

@@ -22,7 +22,7 @@ def test_postprocess_voigt_ordering_and_invariants():
         assert np.all(principal[:, i] >= principal[:, i + 1] - 1e-9)
 
     expected_vm = np.sqrt(
-        0.5 * ((sxx - syy) ** 2 + (syy - szz) ** 2 + (szz - sxx) ** 2) + 3.0 * sxy ** 2
+        0.5 * ((sxx - syy) ** 2 + (syy - szz) ** 2 + (szz - sxx) ** 2) + 3.0 * sxy**2
     )
     assert np.allclose(vm, expected_vm, rtol=1e-9)
 
@@ -42,7 +42,9 @@ def test_plane_strain_has_nonzero_sigma_zz():
     model, result, _ = solve_inp(deck)
     stress = np.asarray(result.elem_stress)
     strain = np.asarray(result.elem_strain)
-    assert np.allclose(strain[:, 2], 0.0, atol=1e-12), "plane strain eps_zz must be zero"
+    assert np.allclose(
+        strain[:, 2], 0.0, atol=1e-12
+    ), "plane strain eps_zz must be zero"
     assert np.all(stress[:, 2] > 1e6)
 
 

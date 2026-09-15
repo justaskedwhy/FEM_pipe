@@ -17,7 +17,12 @@ def live_registry():
 
 def test_registered_elements():
     assert sorted(femcore.registered_elements()) == [
-        "C3D4", "C3D8", "CPE3", "CPE4", "CPS3", "CPS4"
+        "C3D4",
+        "C3D8",
+        "CPE3",
+        "CPE4",
+        "CPS3",
+        "CPS4",
     ]
 
 
@@ -28,13 +33,42 @@ def test_metadata_matches_vtk_table():
     assert femcore.element_meta("C3D8")["vtk"] == 12
 
 
-@pytest.mark.parametrize("etype,coords,thick,plane", [
-    ("CPS3", np.array([[0, 0, 0], [1, 0, 0], [0, 1, 0.0]], dtype=float), 0.01, 0),
-    ("CPS4", np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]], dtype=float), 0.01, 0),
-    ("C3D4", np.array([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]], dtype=float), 1.0, 0),
-    ("C3D8", np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0],
-                       [0, 0, 1], [1, 0, 1], [1, 1, 1], [0, 1, 1]], dtype=float), 1.0, 0),
-])
+@pytest.mark.parametrize(
+    "etype,coords,thick,plane",
+    [
+        ("CPS3", np.array([[0, 0, 0], [1, 0, 0], [0, 1, 0.0]], dtype=float), 0.01, 0),
+        (
+            "CPS4",
+            np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]], dtype=float),
+            0.01,
+            0,
+        ),
+        (
+            "C3D4",
+            np.array([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]], dtype=float),
+            1.0,
+            0,
+        ),
+        (
+            "C3D8",
+            np.array(
+                [
+                    [0, 0, 0],
+                    [1, 0, 0],
+                    [1, 1, 0],
+                    [0, 1, 0],
+                    [0, 0, 1],
+                    [1, 0, 1],
+                    [1, 1, 1],
+                    [0, 1, 1],
+                ],
+                dtype=float,
+            ),
+            1.0,
+            0,
+        ),
+    ],
+)
 def test_stiffness_symmetric_psd_and_rigid_body(etype, coords, thick, plane):
     Ke = femcore.test_element_matrix(etype, coords, 210.0e9, 0.3, thick, plane)
     assert np.allclose(Ke, Ke.T, rtol=1e-10, atol=1e-8)
@@ -50,8 +84,9 @@ def test_stiffness_symmetric_psd_and_rigid_body(etype, coords, thick, plane):
         block[axis] = 1.0
         rig = np.tile(block, npe)
         scale = np.abs(Ke).max()
-        assert np.max(np.abs(Ke @ rig)) < 100.0 * np.finfo(float).eps * scale, \
-            "rigid body translation must produce zero force"
+        assert (
+            np.max(np.abs(Ke @ rig)) < 100.0 * np.finfo(float).eps * scale
+        ), "rigid body translation must produce zero force"
 
 
 def test_inverted_triangle_does_not_throw_large_area():
@@ -67,8 +102,19 @@ def test_degenerate_triangle_throws():
 
 
 Q4_SQUARE = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]], dtype=float)
-H8_CUBE = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0],
-                    [0, 0, 1], [1, 0, 1], [1, 1, 1], [0, 1, 1]], dtype=float)
+H8_CUBE = np.array(
+    [
+        [0, 0, 0],
+        [1, 0, 0],
+        [1, 1, 0],
+        [0, 1, 0],
+        [0, 0, 1],
+        [1, 0, 1],
+        [1, 1, 1],
+        [0, 1, 1],
+    ],
+    dtype=float,
+)
 T4_TET = np.array([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]], dtype=float)
 
 

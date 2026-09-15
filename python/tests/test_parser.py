@@ -72,11 +72,7 @@ def test_cload_set_target_parsed(minimal_deck):
 
 
 def test_standalone_nset_block(minimal_deck):
-    deck = (
-        "*NSET, NSET=BOTTOM\n1, 2\n3\n"
-        "*NSET, NSET=TOP\n4\n"
-        "*NODE\n5, 0, 0\n"
-    )
+    deck = "*NSET, NSET=BOTTOM\n1, 2\n3\n" "*NSET, NSET=TOP\n4\n" "*NODE\n5, 0, 0\n"
     model = parse_inp(deck)
     assert model.nsets["BOTTOM"] == [1, 2, 3]
     assert model.nsets["TOP"] == [4]

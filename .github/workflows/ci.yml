@@ -66,12 +66,14 @@ jobs:
 
       - name: Install vcpkg Dependencies
         run: |
+          $env:VCPKG_ROOT = Join-Path $env:RUNNER_TEMP 'vcpkg'
           git clone https://github.com/microsoft/vcpkg $env:VCPKG_ROOT
           & "$env:VCPKG_ROOT\bootstrap-vcpkg.bat"
           & "$env:VCPKG_ROOT\vcpkg.exe" install eigen3 pybind11 --triplet x64-windows
 
       - name: Build & Install
         run: |
+          $env:VCPKG_ROOT = Join-Path $env:RUNNER_TEMP 'vcpkg'
           $env:CMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake"
           pip install . -v
 

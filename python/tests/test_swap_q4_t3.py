@@ -29,7 +29,9 @@ def test_swap_q4_to_t3_runs_both_and_converges():
     dt3 = _tip_displacement(t3[1], t3[0])
 
     assert 0.0 < dt3 <= dq4, "same mesh: Q4 should be softer than T3"
-    assert dq4 <= DELTA_TIP_BEAM, "Q4 must approach analytical tip deflection from below"
+    assert (
+        dq4 <= DELTA_TIP_BEAM
+    ), "Q4 must approach analytical tip deflection from below"
 
 
 def test_convergence_monotone_under_refinement():

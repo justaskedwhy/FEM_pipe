@@ -16,8 +16,10 @@ def test_single_element_q4_patch_exact_recovery():
         "*BOUNDARY\n"
     )
     boundary = []
-    for n, (x, y) in enumerate([(0, 0), (1, 0), (1, 1), (0, 1), (0.5, 0),
-                                (1, 0.5), (0.5, 1), (0, 0.5)], start=1):
+    for n, (x, y) in enumerate(
+        [(0, 0), (1, 0), (1, 1), (0, 1), (0.5, 0), (1, 0.5), (0.5, 1), (0, 0.5)],
+        start=1,
+    ):
         ux = 1e-3 * x
         uy = -3e-4 * y
         boundary.append(f"{n}, 1, 1, {ux}")

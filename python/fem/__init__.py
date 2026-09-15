@@ -29,4 +29,6 @@ __version__ = "0.1.0"
 def solve_cli(inp_path: str, out_path: str, verbose: bool = False) -> int:
     from .cli import main
 
-    return main(["--in", inp_path, "--out", out_path] + (["--verbose"] if verbose else []))
+    return main(
+        ["--in", inp_path, "--out", out_path] + (["--verbose"] if verbose else [])
+    )

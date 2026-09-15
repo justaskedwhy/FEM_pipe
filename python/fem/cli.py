@@ -11,21 +11,23 @@ import sys
 import numpy as np
 
 from . import meta
-from .errors import FEMError, InputError, ModelError
+from .errors import FEMError
 from .model_builder import build_model
 from .parser import load_inp
-from .preprocessor import preprocess
+from .preprocessor import PreprocessedInput, preprocess
 from .vtk_writer import write_vtu_manual
 
 logger = logging.getLogger("fem")
 
 
-def _fill_solver_input(femcore, prepared: "PreprocessedInput"):
+def _fill_solver_input(femcore, prepared: PreprocessedInput):
     si = femcore.SolverInput()
     si.coords = np.ascontiguousarray(prepared.coords, dtype=np.float64)
     si.elem_type_name = list(prepared.elem_type_name)
     si.elem_conn_flat = np.ascontiguousarray(prepared.elem_conn_flat, dtype=np.int32)
-    si.elem_conn_offsets = np.ascontiguousarray(prepared.elem_conn_offsets, dtype=np.int32)
+    si.elem_conn_offsets = np.ascontiguousarray(
+        prepared.elem_conn_offsets, dtype=np.int32
+    )
     si.elem_mat = np.ascontiguousarray(prepared.elem_mat, dtype=np.int32)
     si.mat_E = np.ascontiguousarray(prepared.mat_E, dtype=np.float64)
     si.mat_nu = np.ascontiguousarray(prepared.mat_nu, dtype=np.float64)
@@ -35,9 +37,13 @@ def _fill_solver_input(femcore, prepared: "PreprocessedInput"):
     si.n_dofs_total = int(prepared.n_dofs_total)
     si.n_dofs_free = int(prepared.n_dofs_free)
     si.prescribed_dofs = np.ascontiguousarray(prepared.prescribed_dofs, dtype=np.int32)
-    si.prescribed_vals = np.ascontiguousarray(prepared.prescribed_vals, dtype=np.float64)
+    si.prescribed_vals = np.ascontiguousarray(
+        prepared.prescribed_vals, dtype=np.float64
+    )
     si.point_load_dofs = np.ascontiguousarray(prepared.point_load_dofs, dtype=np.int32)
-    si.point_load_vals = np.ascontiguousarray(prepared.point_load_vals, dtype=np.float64)
+    si.point_load_vals = np.ascontiguousarray(
+        prepared.point_load_vals, dtype=np.float64
+    )
     si.pressure_elem = np.ascontiguousarray(prepared.pressure_elem, dtype=np.int32)
     si.pressure_face = np.ascontiguousarray(prepared.pressure_face, dtype=np.int32)
     si.pressure_val = np.ascontiguousarray(prepared.pressure_val, dtype=np.float64)
@@ -53,24 +59,31 @@ def solve(inp_path: str, out_path: str, verbose: bool = False):
     logging.basicConfig(level=level, format="%(message)s")
 
     raw = load_inp(inp_path)
-    logger.info("[parser]  Read %d nodes, %d elements from %s",
-                len(raw.nodes), len(raw.elements), inp_path)
+    logger.info(
+        "[parser]  Read %d nodes, %d elements from %s",
+        len(raw.nodes),
+        len(raw.elements),
+        inp_path,
+    )
 
     model = build_model(raw)
-    logger.info("[model]   Dimension = %d, active materials = %d",
-                model.dimension, model.n_mat)
+    logger.info(
+        "[model]   Dimension = %d, active materials = %d", model.dimension, model.n_mat
+    )
 
     prepared = preprocess(model)
     n_presc = prepared.prescribed_dofs.size
-    logger.info("[preproc] DOFs total = %d, free = %d, prescribed = %d",
-                prepared.n_dofs_total, prepared.n_dofs_free, n_presc)
+    logger.info(
+        "[preproc] DOFs total = %d, free = %d, prescribed = %d",
+        prepared.n_dofs_total,
+        prepared.n_dofs_free,
+        n_presc,
+    )
 
     try:
         import femcore
     except ImportError:
-        raise FEMError(
-            "femcore extension is not built. Run `pip install . -v` first."
-        )
+        raise FEMError("femcore extension is not built. Run `pip install . -v` first.")
 
     meta.configure(lambda name: femcore.element_meta(name))
 
@@ -84,8 +97,10 @@ def solve(inp_path: str, out_path: str, verbose: bool = False):
             "(rigid body modes must be constrained)"
         )
 
-    logger.info("[solve]   SimplicialLDLT solve OK, residual norm = %.3e",
-                float(result.residual_norm))
+    logger.info(
+        "[solve]   SimplicialLDLT solve OK, residual norm = %.3e",
+        float(result.residual_norm),
+    )
 
     disp = np.asarray(result.displacement)
     max_disp = float(np.max(np.linalg.norm(disp, axis=1))) if disp.size else 0.0
@@ -100,9 +115,15 @@ class SolverFailure(FEMError):
 
 
 def main(argv=None) -> int:
-    parser = argparse.ArgumentParser(prog="femsolver", description=__doc__.splitlines()[0])
-    parser.add_argument("--in", dest="inp_path", required=True, help="input ABAQUS .inp deck")
-    parser.add_argument("--out", dest="out_path", required=True, help="output VTK .vtu file")
+    parser = argparse.ArgumentParser(
+        prog="femsolver", description=__doc__.splitlines()[0]
+    )
+    parser.add_argument(
+        "--in", dest="inp_path", required=True, help="input ABAQUS .inp deck"
+    )
+    parser.add_argument(
+        "--out", dest="out_path", required=True, help="output VTK .vtu file"
+    )
     parser.add_argument("--verbose", action="store_true", help="debug logging")
     args = parser.parse_args(argv)
 

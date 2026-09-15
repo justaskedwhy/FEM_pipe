@@ -20,25 +20,51 @@ logger = logging.getLogger("fem.preproc")
 
 @dataclass
 class PreprocessedInput:
-    coords: np.ndarray = field(default_factory=lambda: np.zeros((0, 3), dtype=np.float64))
+    coords: np.ndarray = field(
+        default_factory=lambda: np.zeros((0, 3), dtype=np.float64)
+    )
     elem_type_name: list[str] = field(default_factory=list)
-    elem_conn_flat: np.ndarray = field(default_factory=lambda: np.zeros(0, dtype=np.int32))
-    elem_conn_offsets: np.ndarray = field(default_factory=lambda: np.zeros(1, dtype=np.int32))
+    elem_conn_flat: np.ndarray = field(
+        default_factory=lambda: np.zeros(0, dtype=np.int32)
+    )
+    elem_conn_offsets: np.ndarray = field(
+        default_factory=lambda: np.zeros(1, dtype=np.int32)
+    )
     elem_mat: np.ndarray = field(default_factory=lambda: np.zeros(0, dtype=np.int32))
     mat_E: np.ndarray = field(default_factory=lambda: np.zeros(0, dtype=np.float64))
     mat_nu: np.ndarray = field(default_factory=lambda: np.zeros(0, dtype=np.float64))
-    mat_thickness: np.ndarray = field(default_factory=lambda: np.zeros(0, dtype=np.float64))
-    mat_plane_mode: np.ndarray = field(default_factory=lambda: np.zeros(0, dtype=np.int32))
-    dof_map: np.ndarray = field(default_factory=lambda: np.full((0, 3), -1, dtype=np.int32))
+    mat_thickness: np.ndarray = field(
+        default_factory=lambda: np.zeros(0, dtype=np.float64)
+    )
+    mat_plane_mode: np.ndarray = field(
+        default_factory=lambda: np.zeros(0, dtype=np.int32)
+    )
+    dof_map: np.ndarray = field(
+        default_factory=lambda: np.full((0, 3), -1, dtype=np.int32)
+    )
     n_dofs_total: int = 0
     n_dofs_free: int = 0
-    prescribed_dofs: np.ndarray = field(default_factory=lambda: np.zeros(0, dtype=np.int32))
-    prescribed_vals: np.ndarray = field(default_factory=lambda: np.zeros(0, dtype=np.float64))
-    point_load_dofs: np.ndarray = field(default_factory=lambda: np.zeros(0, dtype=np.int32))
-    point_load_vals: np.ndarray = field(default_factory=lambda: np.zeros(0, dtype=np.float64))
-    pressure_elem: np.ndarray = field(default_factory=lambda: np.zeros(0, dtype=np.int32))
-    pressure_face: np.ndarray = field(default_factory=lambda: np.zeros(0, dtype=np.int32))
-    pressure_val: np.ndarray = field(default_factory=lambda: np.zeros(0, dtype=np.float64))
+    prescribed_dofs: np.ndarray = field(
+        default_factory=lambda: np.zeros(0, dtype=np.int32)
+    )
+    prescribed_vals: np.ndarray = field(
+        default_factory=lambda: np.zeros(0, dtype=np.float64)
+    )
+    point_load_dofs: np.ndarray = field(
+        default_factory=lambda: np.zeros(0, dtype=np.int32)
+    )
+    point_load_vals: np.ndarray = field(
+        default_factory=lambda: np.zeros(0, dtype=np.float64)
+    )
+    pressure_elem: np.ndarray = field(
+        default_factory=lambda: np.zeros(0, dtype=np.int32)
+    )
+    pressure_face: np.ndarray = field(
+        default_factory=lambda: np.zeros(0, dtype=np.int32)
+    )
+    pressure_val: np.ndarray = field(
+        default_factory=lambda: np.zeros(0, dtype=np.float64)
+    )
     n_nodes: int = 0
     n_elem: int = 0
     n_mat: int = 0
