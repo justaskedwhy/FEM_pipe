@@ -32,8 +32,8 @@ decks, solves the static equilibrium system, and writes VTK `.vtu` results.
 | NumPy | >= 1.23 | Contiguous numeric buffers |
 | CMake | >= 3.16 | C++ build |
 | C++ compiler | C++17 | Numerical core (GCC 9+, Clang 10+, MSVC 2019+) |
-| Eigen | >= 3.4 | Sparse/dense linear algebra (header-only) |
-| pybind11 | >= 2.11 | Python <-> C++ memory bridge |
+| Eigen | >= 3.4 | Sparse/dense linear algebra (auto-downloaded if not found) |
+| pybind11 | >= 2.11 | Python <-> C++ memory bridge (auto-installed by pip at build time) |
 | meshio | >= 5.0 | optional `.vtu` exporter (fallback writer) |
 
 ## Install
@@ -45,12 +45,50 @@ install time.
 pip install . -v
 ```
 
-System prerequisites (Debian/Ubuntu):
+### System prerequisites
+
+The build requires a **C++17 compiler** and **CMake** (auto-installed by pip).
+Eigen3 is auto-downloaded by CMake if not found on your system.
+
+**Debian / Ubuntu:**
 
 ```bash
-sudo apt install -y build-essential cmake python3-dev libeigen3-dev \
-                    pybind11-dev ninja-build
+sudo apt install -y build-essential cmake python3-dev ninja-build
 ```
+
+**macOS** (Apple Clang):
+
+```bash
+xcode-select --install
+brew install cmake eigen   # eigen optional; auto-downloaded if absent
+```
+
+**Windows:**
+
+1. Install **Visual Studio 2022 Build Tools** (or full Visual Studio):
+   - Download from <https://visualstudio.microsoft.com/visual-cpp-build-tools/>
+   - In the installer, select the **"Desktop development with C++"** workload
+     (this provides the MSVC compiler, linker, and Windows SDK).
+2. Open **"x64 Native Tools Command Prompt for VS 2022"** (search the Start
+   menu) — this makes `cl.exe` and `link.exe` available to CMake.
+3. Run:
+
+```cmd
+pip install . -v
+```
+
+> **Why the developer prompt?** scikit-build-core uses CMake, which needs an
+> MSVC toolchain on Windows. The developer prompt sets up the compiler paths
+> automatically. Without it you will see `nmake: not found` or
+> `CMAKE_CXX_COMPILER not set`.
+
+### Troubleshooting
+
+| Symptom | Fix |
+|:---|:---|
+| `nmake: not found` / `CMAKE_CXX_COMPILER not set` | Install VS Build Tools + run from developer prompt (see above) |
+| `Could not find a configuration file for package "pybind11"` | pip install pulls pybind11 automatically — this should not happen; retry `pip install . -v` |
+| `Could not find package "Eigen3"` | CMake auto-downloads Eigen3 via FetchContent; requires internet on first build |
 
 ## Quick start
 
