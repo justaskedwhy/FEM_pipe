@@ -115,3 +115,48 @@ def test_boundary_unknown_node_set_raises(minimal_deck):
     deck = minimal_deck.replace("1, 1, 2, 0.0", "GHOST, 1, 2, 0.0")
     with pytest.raises(ModelError, match="undefined or empty node set"):
         build_model(parse_inp(deck))
+
+
+def test_surface_pressure_expansion():
+    deck = (
+        "*NODE\n1, 0, 0\n2, 1, 0\n3, 1, 1\n4, 0, 1\n5, 0.5, 0\n6, 1, 0.5\n"
+        "*ELEMENT, TYPE=CPS4, ELSET=P\n"
+        "1, 1, 5, 6, 4\n2, 5, 2, 3, 6\n"
+        "*ELSET, ELSET=EDGE\n1\n2\n"
+        "*MATERIAL, NAME=M\n*ELASTIC\n210.0e9, 0.3\n"
+        "*SOLID SECTION, ELSET=P, MATERIAL=M\n0.01\n"
+        "*SURFACE, TYPE=ELEMENT, NAME=TOPP\nEDGE, S2\n"
+        "*DSLOAD\nTOPP, P, -3.5\n"
+        "*STEP\n*STATIC\n*END STEP\n"
+    )
+    model = build_model(parse_inp(deck))
+    assert sorted(p.elem_id for p in model.pressure_loads) == [1, 2]
+    assert all(p.face_label == "P2" for p in model.pressure_loads)
+    assert all(p.magnitude == -3.5 for p in model.pressure_loads)
+
+
+def test_surface_undefined_surface_raises():
+    deck = (
+        "*NODE\n1, 0, 0\n2, 1, 0\n3, 1, 1\n4, 0, 1\n"
+        "*ELEMENT, TYPE=CPS4, ELSET=P\n1, 1, 2, 3, 4\n"
+        "*MATERIAL, NAME=M\n*ELASTIC\n210.0e9, 0.3\n"
+        "*SOLID SECTION, ELSET=P, MATERIAL=M\n0.01\n"
+        "*DSLOAD\nGHOST, P, -3.5\n"
+        "*STEP\n*STATIC\n*END STEP\n"
+    )
+    with pytest.raises(ModelError, match="undefined surface"):
+        build_model(parse_inp(deck))
+
+
+def test_surface_undefined_elset_raises():
+    deck = (
+        "*NODE\n1, 0, 0\n2, 1, 0\n3, 1, 1\n4, 0, 1\n"
+        "*ELEMENT, TYPE=CPS4, ELSET=P\n1, 1, 2, 3, 4\n"
+        "*MATERIAL, NAME=M\n*ELASTIC\n210.0e9, 0.3\n"
+        "*SOLID SECTION, ELSET=P, MATERIAL=M\n0.01\n"
+        "*SURFACE, TYPE=ELEMENT, NAME=P1\nNOELEMS, S1\n"
+        "*DSLOAD\nP1, P, -3.5\n"
+        "*STEP\n*STATIC\n*END STEP\n"
+    )
+    with pytest.raises(ModelError, match="undefined or empty element set"):
+        build_model(parse_inp(deck))

@@ -11,7 +11,7 @@ import numpy as np
 
 from .errors import ModelError
 from .meta import element_meta
-from .parser import RawBoundary, RawModel, RawPointLoad
+from .parser import RawBoundary, RawModel, RawPointLoad, RawPressureLoad
 
 logger = logging.getLogger("fem.model")
 
@@ -79,6 +79,38 @@ def _expand_set_point_loads(point_loads, nsets):
             )
         for nid in node_ids:
             expanded.append(RawPointLoad(node_id=nid, dof=p.dof, magnitude=p.magnitude))
+    return expanded
+
+
+def _expand_surface_pressure_loads(pressure_loads, surfaces, elsets):
+    expanded = []
+    for p in pressure_loads:
+        if p.surface_name is None:
+            expanded.append(p)
+            continue
+        surface = surfaces.get(p.surface_name)
+        if not surface:
+            raise ModelError(f"*DSLOAD references undefined surface '{p.surface_name}'")
+        for set_token, face_label in surface:
+            compatible = []
+            if set_token.isdigit():
+                compatible = [int(set_token)]
+            else:
+                compatible = elsets.get(set_token, [])
+                if not compatible:
+                    raise ModelError(
+                        f"*DSLOAD surface '{p.surface_name}' references "
+                        f"undefined or empty element set '{set_token}'"
+                    )
+            face_num = int(face_label[1:])
+            for eid in compatible:
+                expanded.append(
+                    RawPressureLoad(
+                        elem_id=eid,
+                        face_label=f"P{face_num}",
+                        magnitude=p.magnitude,
+                    )
+                )
     return expanded
 
 
@@ -207,7 +239,9 @@ def build_model(raw: RawModel) -> FEMModel:
         mat_plane_mode=mat_plane_mode,
         boundaries=_expand_set_boundaries(raw.boundaries, raw.nsets),
         point_loads=_expand_set_point_loads(raw.point_loads, raw.nsets),
-        pressure_loads=list(raw.pressure_loads),
+        pressure_loads=_expand_surface_pressure_loads(
+            raw.pressure_loads, raw.surfaces, raw.elsets
+        ),
         node_ids=[n.id for n in node_order],
         elem_ids=[e.id for e in elem_order],
         n_nodes=len(node_order),

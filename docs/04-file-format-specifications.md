@@ -144,19 +144,47 @@ Applies uniform surface pressure loads to element faces.
 
 **Face-label authority**: `P<k>` maps directly to the 1-based local face id `k` of the element kernel (`kernel->face_nodes(k)`, `k ∈ [1, n_faces]`). The kernel's face tables (§1.3 and doc 02 §2.9) define which nodes form face `k`. The preprocessor validates `k` against the element's `n_faces` from the registry and raises a `ModelError` if out of range — no parser-side or hardcoded face table exists outside the kernels (invariant I2).
 
-#### 8. `*NSET` & `*ELSET` (standalone set blocks)
-Defines a named node or element set by explicit member list (complementing the `NSET=`/`ELSET=` parameters on `*NODE`/`*ELEMENT`).
+#### 8. `*SURFACE` (element-based) & `*DSLOAD` (surface pressure)
+Defines a named element-based surface and applies a uniform pressure to it. This is the ABAQUS/CAE-native pattern for load application (used by the example decks `Q4.inp`, `T3.inp`, `T4.inp`, `H8.inp`).
+```abaqus
+*SURFACE, TYPE=ELEMENT, NAME=<name>
+<element_or_elset>, <face_label>
+
+*DSLOAD
+<surface_name>, P, <magnitude>
+```
+* **Fields** (`*SURFACE`): `element_or_elset` (`int` element ID or named `ELSET`) plus a face label `S1` through `S6`. Each data line contributes one (set, face) pair; multiple lines accumulate onto the named surface.
+* **Fields** (`*DSLOAD`): `surface_name` (`string`, must match a `*SURFACE` `NAME=`) and load label `P` followed by the magnitude (`float`, Pa). Positive acts compressive.
+* The model builder expands each surface into one per-element `P<k>` pressure load (mapping `S<k>` → `P<k>`), validating that the referenced surface and element set exist (`ModelError` otherwise). Per-element `*DLOAD` (§1.4.7 above) remains supported independently.
+
+#### 9. `*NSET` & `*ELSET` (standalone set blocks)
+Defines a named node or element set by explicit member list or by `GENERATE` range (complementing the `NSET=`/`ELSET=` parameters on `*NODE`/`*ELEMENT`).
 ```abaqus
 *NSET, NSET=<name> [, UNSORTED]
 <id> [, <id> ...]
 
+*NSET, NSET=<name>, GENERATE
+<first>, <last> [, <step>]
+
 *ELSET, ELSET=<name> [, UNSORTED]
 <id> [, <id> ...]
-```
-* **Parameters**: `NSET`/`ELSET` (`string`, required); `UNSORTED` (optional, ignored). `GENERATE` ranges are not supported.
-* **Data**: comma-separated node/element IDs, one or more per line, appended to the named set. Referencing an undefined set in `*BOUNDARY`/`*CLOAD` raises a `ModelError`.
 
-#### 9. Analysis Step Control
+*ELSET, ELSET=<name>, GENERATE
+<first>, <last> [, <step>]
+```
+* **Parameters**: `NSET`/`ELSET` (`string`, required); `UNSORTED`/`INTERNAL` (optional, ignored); `GENERATE` (optional) selects range form.
+* **Data**: comma-separated node/element IDs, one or more per line, appended to the named set; or, under `GENERATE`, a single line `<first>, <last>[, <step>]` producing the integer sequence `first, first+step, ..., last` (step defaults to `1`, must be `> 0`).
+* Set-name tokens in a member list refer to previously-defined sets (members are unioned, de-duplicated) — `ModelError`/`InputError` if the referenced set is undefined.
+* Referencing an undefined set in `*BOUNDARY`/`*CLOAD`/`*SURFACE` raises a `ModelError`.
+
+#### 10. `*PART`, `*ASSEMBLY`, `*INSTANCE` scoping
+ABAQUS/CAE exports enclose nodes/elements inside `*PART ... *END PART` and define instance-level sets inside `*ASSEMBLY ... *END ASSEMBLY`. The parser flattens these into a single mesh but preserves a scoped namespace so identical set names at different scopes do not collide:
+* Set definitions inside a part are stored as `part:<part>:<name>`.
+* Set definitions carrying an `INSTANCE=<inst>` parameter are stored as `instance:<inst>:<name>`.
+* References (`*SOLID SECTION ELSET=`, `*BOUNDARY`, `*CLOAD`, `*SURFACE`) resolve to the matching scope: inside a part they use the part-prefixed key; at model/step level they fall back to the most recently declared instance's key, then the bare name.
+* Material/section/step blocks may sit outside `*PART`/`*ASSEMBLY` blocks; both layouts are accepted.
+
+#### 11. Analysis Step Control
 ```abaqus
 *STEP [, NLGEOM=NO]
 *STATIC
@@ -169,7 +197,8 @@ Defines linear static solution execution. `NLGEOM` must be `NO` or omitted.
 ### 1.5 Ignored Keywords & Diagnostic Policy
 The parser logs an informational warning and safely skips data lines for the following unsupported keywords:
 * Output requests: `*RESTART`, `*OUTPUT`, `*EL PRINT`, `*NODE PRINT`, `*EL FILE`, `*NODE FILE`.
-* Constraints & Contact: `*SURFACE`, `*TIE`, `*CONTACT`, `*EQUATION`, `*MPC`, `*KINEMATIC`.
+* Constraints & Contact: `*TIE`, `*CONTACT`, `*EQUATION`, `*MPC`, `*KINEMATIC`.
+* Structured headers: `*HEADING`, `*PREPRINT`.
 * Structural/Thermal: `*SHELL SECTION`, `*BEAM SECTION`, `*AMPLITUDE`, `*TEMPERATURE`.
 
 ---

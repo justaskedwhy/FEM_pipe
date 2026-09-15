@@ -19,12 +19,20 @@ SUPPORTED_KEYWORDS = frozenset(
         "ELEMENT",
         "NSET",
         "ELSET",
+        "PART",
+        "END PART",
+        "ASSEMBLY",
+        "INSTANCE",
+        "END INSTANCE",
+        "END ASSEMBLY",
+        "SURFACE",
         "MATERIAL",
         "ELASTIC",
         "SOLID SECTION",
         "BOUNDARY",
         "CLOAD",
         "DLOAD",
+        "DSLOAD",
         "STEP",
         "STATIC",
         "END STEP",
@@ -39,7 +47,8 @@ UNSUPPORTED_KEYWORDS = frozenset(
         "NODE PRINT",
         "EL FILE",
         "NODE FILE",
-        "SURFACE",
+        "HEADING",
+        "PREPRINT",
         "TIE",
         "CONTACT",
         "EQUATION",
@@ -104,6 +113,7 @@ class RawPressureLoad:
     elem_id: int
     face_label: str
     magnitude: float
+    surface_name: Optional[str] = None
 
 
 @dataclass
@@ -117,6 +127,7 @@ class RawModel:
     pressure_loads: list[RawPressureLoad] = field(default_factory=list)
     nsets: dict[str, list[int]] = field(default_factory=dict)
     elsets: dict[str, list[int]] = field(default_factory=dict)
+    surfaces: dict[str, list[tuple[str, str]]] = field(default_factory=dict)
 
 
 def _parse_float(text: str, line_no: int) -> float:
@@ -164,6 +175,26 @@ def parse_inp(text: str) -> RawModel:
     current_keyword: Optional[str] = None
     current_params: dict[str, Optional[str]] = {}
     current_material: Optional[str] = None
+    current_part: Optional[str] = None
+    last_instance: Optional[str] = None
+    current_surface_name: Optional[str] = None
+
+    def store_name(name: str) -> str:
+        instance = current_params.get("INSTANCE")
+        if instance:
+            return f"instance:{instance}:{name}"
+        if current_part:
+            return f"part:{current_part}:{name}"
+        return name
+
+    def ref_name(name: str, target: dict) -> str:
+        if current_part:
+            return f"part:{current_part}:{name}"
+        if last_instance:
+            key = f"instance:{last_instance}:{name}"
+            if key in target:
+                return key
+        return name
 
     lines = text.splitlines()
     line_no = 0
@@ -201,6 +232,29 @@ def parse_inp(text: str) -> RawModel:
             elif keyword_name == "STEP":
                 if params.get("NLGEOM") not in (None, "NO"):
                     raise InputError(f"*STEP NLGEOM must be NO at line {line_no}")
+            elif keyword_name in ("PART", "INSTANCE"):
+                instance = params.get("NAME")
+                if keyword_name == "INSTANCE":
+                    last_instance = instance
+                    current_keyword = "__skip__"
+                else:
+                    current_part = instance
+            elif keyword_name in (
+                "END PART",
+                "END INSTANCE",
+                "END ASSEMBLY",
+                "ASSEMBLY",
+            ):
+                if keyword_name == "END PART":
+                    current_part = None
+                current_keyword = "__skip__"
+            elif keyword_name == "SURFACE":
+                current_surface_name = params.get("NAME")
+                surface_type = params.get("TYPE")
+                if not current_surface_name:
+                    raise InputError(f"*SURFACE requires NAME= at line {line_no}")
+                if surface_type and surface_type.upper() != "ELEMENT":
+                    raise InputError(f"*SURFACE type must be ELEMENT at line {line_no}")
             elif keyword_name == "SOLID SECTION":
                 elset_name = params.get("ELSET")
                 material_name = params.get("MATERIAL")
@@ -223,7 +277,7 @@ def parse_inp(text: str) -> RawModel:
                     break
                 model.sections.append(
                     RawSection(
-                        elset_name=elset_name,
+                        elset_name=ref_name(elset_name, model.elsets),
                         material_name=material_name,
                         thickness=thickness,
                     )
@@ -253,7 +307,7 @@ def parse_inp(text: str) -> RawModel:
             model.nodes[node_id] = RawNode(id=node_id, x=x, y=y, z=z)
             nset_name = current_params.get("NSET")
             if nset_name:
-                model.nsets.setdefault(nset_name, []).append(node_id)
+                model.nsets.setdefault(store_name(nset_name), []).append(node_id)
 
         elif current_keyword in ("NSET", "ELSET"):
             is_nset = current_keyword == "NSET"
@@ -266,15 +320,51 @@ def parse_inp(text: str) -> RawModel:
                     f"*{current_keyword} requires {param}= at line {line_no}"
                 )
             target = model.nsets if is_nset else model.elsets
-            for token in fields:
-                if not token:
-                    continue
-                if token.upper() in ("GENERATE", "UNSORTED"):
+            key = store_name(set_name)
+            utils = list(target.setdefault(key, []))
+            if "GENERATE" in current_params:
+                if len(fields) < 2:
                     raise InputError(
-                        f"*{current_keyword} GENERATE form is not supported "
+                        f"*{current_keyword} GENERATE needs first,last[,step] "
                         f"at line {line_no}"
                     )
-                target.setdefault(set_name, []).append(_parse_int(token, line_no))
+                first = _parse_int(fields[0], line_no)
+                last = _parse_int(fields[1], line_no)
+                step = 1
+                if len(fields) >= 3 and fields[2]:
+                    step = _parse_int(fields[2], line_no)
+                if step <= 0:
+                    raise InputError(
+                        f"*{current_keyword} GENERATE step must be > 0 at line {line_no}"
+                    )
+                for value in range(first, last + 1, step):
+                    utils.append(value)
+                current_keyword = "__skip__"
+            else:
+                for token in fields:
+                    if not token:
+                        continue
+                    token = token.strip()
+                    if token in ("UNSORTED", "INTERNAL"):
+                        continue
+                    if token.isdigit():
+                        utils.append(_parse_int(token, line_no))
+                    else:
+                        if is_nset:
+                            if token not in model.nsets:
+                                raise InputError(
+                                    f"*NSET references undefined set '{token}' "
+                                    f"at line {line_no}"
+                                )
+                            utils.extend(model.nsets[token])
+                        else:
+                            if token not in model.elsets:
+                                raise InputError(
+                                    f"*ELSET references undefined set '{token}' "
+                                    f"at line {line_no}"
+                                )
+                            utils.extend(model.elsets[token])
+            target[key] = list(dict.fromkeys(utils))
 
         elif current_keyword == "ELEMENT":
             if "TYPE" not in current_params:
@@ -292,7 +382,8 @@ def parse_inp(text: str) -> RawModel:
             )
             elset_name = current_params.get("ELSET")
             if elset_name:
-                model.elsets.setdefault(elset_name, []).append(elem_id)
+                key = store_name(elset_name)
+                model.elsets.setdefault(key, []).append(elem_id)
 
         elif current_keyword == "MATERIAL":
             pass
@@ -319,7 +410,7 @@ def parse_inp(text: str) -> RawModel:
                 node_set = None
             else:
                 node_id = 0
-                node_set = node_token
+                node_set = ref_name(node_token, model.nsets)
             dof_first = _parse_int(fields[1], line_no)
             dof_last = _parse_int(fields[2], line_no)
             if not (1 <= dof_first <= dof_last <= 3):
@@ -350,7 +441,7 @@ def parse_inp(text: str) -> RawModel:
                 node_set = None
             else:
                 node_id = 0
-                node_set = node_token
+                node_set = ref_name(node_token, model.nsets)
             dof = _parse_int(fields[1], line_no)
             if not 1 <= dof <= 3:
                 raise InputError(f"*CLOAD invalid dof {dof} at line {line_no}")
@@ -376,6 +467,47 @@ def parse_inp(text: str) -> RawModel:
             model.pressure_loads.append(
                 RawPressureLoad(
                     elem_id=elem_id, face_label=face_label, magnitude=magnitude
+                )
+            )
+
+        elif current_keyword == "SURFACE":
+            if len(fields) < 2:
+                raise InputError(f"*SURFACE entry needs set,face at line {line_no}")
+            set_token = fields[0].strip()
+            face_label = fields[1].upper()
+            if not (face_label.startswith("S") and face_label[1:].isdigit()):
+                raise InputError(
+                    f"*SURFACE invalid face label {face_label!r} at line {line_no}"
+                )
+            if current_surface_name is None:
+                raise InputError(f"*SURFACE data without NAME= at line {line_no}")
+            resolved_set = (
+                () if set_token.isdigit() else ref_name(set_token, model.elsets)
+            )
+            if set_token.isdigit():
+                resolved_set = set_token
+            model.surfaces.setdefault(current_surface_name, []).append(
+                (resolved_set, face_label)
+            )
+
+        elif current_keyword == "DSLOAD":
+            if len(fields) < 3:
+                raise InputError(
+                    f"*DSLOAD entry needs surface,P,magnitude at line {line_no}"
+                )
+            surface_name = fields[0].strip()
+            label = fields[1].upper()
+            if label != "P":
+                raise InputError(
+                    f"*DSLOAD invalid load label {label!r} at line {line_no}"
+                )
+            magnitude = _parse_float(fields[2], line_no)
+            model.pressure_loads.append(
+                RawPressureLoad(
+                    elem_id=0,
+                    face_label="",
+                    magnitude=magnitude,
+                    surface_name=surface_name,
                 )
             )
 

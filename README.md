@@ -124,6 +124,15 @@ Open the `.vtu` in ParaView and apply **Warp By Vector** with
 | `q4_pressure.inp` | CPS4 | top-face pressure, exact σ_yy |
 | `h8_pressure.inp` | C3D8 | top-face pressure, exact σ_zz |
 
+Full ABAQUS/CAE export decks (part/assembly/instance structure, `GENERATE` sets, `*SURFACE` + `*DSLOAD` pressure):
+
+| Deck | Element | Mesh |
+|------|---------|------|
+| `Q4.inp` | CPS4R | plate with hole, 2359 nodes / 2254 elems |
+| `T3.inp` | CPS3 | same plate, 2359 nodes / 4508 elems |
+| `T4.inp` | C3D4 | tet mesh, 1582 nodes / 6824 elems |
+| `H8.inp` | C3D8R | hex mesh, 2860 nodes / 1956 elems |
+
 ## CLI reference
 
 ```
