@@ -19,6 +19,7 @@ def test_registered_elements():
     assert sorted(femcore.registered_elements()) == [
         "C3D4",
         "C3D8",
+        "C3D8R",
         "CPE3",
         "CPE4",
         "CPS3",

@@ -37,7 +37,7 @@ jobs:
         run: pip install . -v
 
       - name: Verify C++ Module Import
-        run: python -c "import femcore; assert femcore.registered_elements() == ['C3D4','C3D8','CPE3','CPE4','CPS3','CPS4','CPS4R']"
+        run: python -c "import femcore; assert femcore.registered_elements() == ['C3D4','C3D8','C3D8R','CPE3','CPE4','CPS3','CPS4','CPS4R']"
 
       - name: Run Test Suite
         run: pytest python/tests -m "not slow" -v --cov=fem --cov-report=xml

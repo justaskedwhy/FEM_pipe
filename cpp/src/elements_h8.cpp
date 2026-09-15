@@ -214,3 +214,4 @@ private:
 } // namespace fem
 
 REGISTER_ELEMENT("C3D8", fem::H8Kernel);
+REGISTER_ELEMENT("C3D8R", fem::H8Kernel);

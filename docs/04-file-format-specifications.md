@@ -80,7 +80,7 @@ Defines mesh elements and topological connectivity.
 <id>, <n1>, <n2>, ..., <n_npe>
 ```
 * **Parameters**:
-  * `TYPE` (`string`, required): ABAQUS element identifier (`CPS3`, `CPE3`, `CPS4`, `CPE4`, `CPS4R`, `C3D4`, `C3D8`).
+  * `TYPE` (`string`, required): ABAQUS element identifier (`CPS3`, `CPE3`, `CPS4`, `CPE4`, `CPS4R`, `C3D4`, `C3D8`, `C3D8R`).
   * `ELSET` (optional): Assigns created elements to a named element set.
 * **Fields**:
   * `id` (`int`, required): Positive element identifier.
@@ -279,7 +279,7 @@ The VTK XML `UnstructuredGrid` (`.vtu`) format is chosen for post-processing and
 | **T3** | `CPS3`, `CPE3` | `5` | `VTK_TRIANGLE` | `{0, 1, 2}` |
 | **Q4** | `CPS4`, `CPE4`, `CPS4R` | `9` | `VTK_QUAD` | `{0, 1, 2, 3}` |
 | **T4** | `C3D4` | `10` | `VTK_TETRA` | `{0, 1, 2, 3}` |
-| **H8** | `C3D8` | `12` | `VTK_HEXAHEDRON` | `{0, 1, 2, 3, 4, 5, 6, 7}` |
+| **H8** | `C3D8`, `C3D8R` | `12` | `VTK_HEXAHEDRON` | `{0, 1, 2, 3, 4, 5, 6, 7}` |
 | *T6 (Future)* | `CPS6`, `CPE6` | `22` | `VTK_QUADRATIC_TRIANGLE` | `{0, 1, 2, 3, 4, 5}` |
 | *Q8 (Future)* | `CPS8`, `CPE8` | `23` | `VTK_QUADRATIC_QUAD` | `{0, 1, 2, 3, 4, 5, 6, 7}` |
 | *T10 (Future)* | `C3D10` | `24` | `VTK_QUADRATIC_TETRA` | `{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}` |

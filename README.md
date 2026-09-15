@@ -12,7 +12,7 @@ decks, solves the static equilibrium system, and writes VTK `.vtu` results.
 ## Features
 
 - **Four element families** (ABAQUS names): `CPS3`/`CPE3` (T3), `CPS4`/`CPE4`/`CPS4R`
-  (Q4), `C3D4` (T4), `C3D8` (H8). Kernels self-register via the
+  (Q4), `C3D4` (T4), `C3D8`/`C3D8R` (H8). Kernels self-register via the
   `REGISTER_ELEMENT` macro.
 - **Static linear elasticity**: plane stress / plane strain / 3D, isotropic
   materials, nodal `*BOUNDARY` and `*CLOAD`, surface `*DLOAD` pressure.
@@ -163,7 +163,7 @@ python -c "import femcore; print(femcore.registered_elements())"
 Expected:
 
 ```text
-['C3D4', 'C3D8', 'CPE3', 'CPE4', 'CPS3', 'CPS4', 'CPS4R']
+['C3D4', 'C3D8', 'C3D8R', 'CPE3', 'CPE4', 'CPS3', 'CPS4', 'CPS4R']
 ```
 
 An empty list means the linker stripped the static registrations — make sure
