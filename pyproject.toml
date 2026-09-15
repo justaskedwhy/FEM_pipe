@@ -20,6 +20,7 @@ viz = ["meshio>=5.0"]
 
 [tool.scikit-build]
 wheel.packages = ["python/fem"]
+build-dir = "build/{wheel_tag}"
 
 [tool.scikit-build.install]
 strip = false

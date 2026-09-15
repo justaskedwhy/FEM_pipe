@@ -64,18 +64,16 @@ jobs:
       - name: Set up MSVC Toolchain
         uses: ilammy/msvc-dev-cmd@v1
 
-      - name: Install vcpkg Dependencies
+            - name: Install Eigen3
         run: |
-          $env:VCPKG_ROOT = Join-Path $env:RUNNER_TEMP 'vcpkg'
-          git clone https://github.com/microsoft/vcpkg $env:VCPKG_ROOT
-          & "$env:VCPKG_ROOT\bootstrap-vcpkg.bat"
-          & "$env:VCPKG_ROOT\vcpkg.exe" install eigen3 pybind11 --triplet x64-windows
+          curl -sL https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.zip -o eigen.zip
+          Expand-Archive -Path eigen.zip -DestinationPath C:\deps
+          cmake -S C:\deps\eigen-3.4.0 -B C:\deps\eigen-build -DCMAKE_INSTALL_PREFIX=C:\deps\eigen-install
+          cmake --build C:\deps\eigen-build --config Release --target install
+          echo "CMAKE_PREFIX_PATH=C:\deps\eigen-install" >> $env:GITHUB_ENV
 
       - name: Build & Install
-        run: |
-          $env:VCPKG_ROOT = Join-Path $env:RUNNER_TEMP 'vcpkg'
-          $env:CMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake"
-          pip install . -v
+        run: pip install . -v
 
       - name: Run Unit Tests
         run: pytest python/tests -m "not slow" -v
